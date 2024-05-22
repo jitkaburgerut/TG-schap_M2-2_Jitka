@@ -4,10 +4,13 @@ import pandas as pd
 from functions import read_csv_files_BA
 import pingouin as pg
 
+# extract data 
+
 folder_path_capno='C:/Users/Jitka/OneDrive/Documenten/Technische Geneeskunde Master/Stages/Stage 2  - SEH UMCG/Scripts/0.25/capnography'
 folder_path_IP='C:/Users/Jitka/OneDrive/Documenten/Technische Geneeskunde Master/Stages/Stage 2  - SEH UMCG/Scripts/0.25/IP'
 DF_list_capno=read_csv_files_BA(folder_path_capno)
 DF_list_IP=read_csv_files_BA(folder_path_IP)
+
 
 all_capno=0
 capno_HQ_matching=[]
@@ -52,6 +55,8 @@ stdRR_IP=np.std(60/IP_HQ_capno)
 capno_all_HQ_capno=np.concatenate((capno_HQ_matching,capno_HQ_capno))
 IP_all_HQ_capno=np.concatenate((IP_HQ_matching,IP_HQ_capno))
 
+# create Bland-Altman plots
+
 x_axis=[]
 y_axis=[]
 
@@ -65,7 +70,7 @@ def BlandAltman(data1,data2):
 
     mean=np.mean(y_axis)
     
-    std_diff = np.std(y_axis)  # ddof=1 for sample standard deviation
+    std_diff = np.std(y_axis)  
 
     # Calculate limits of agreement
     limit_of_agreement_plus = 1.96 * std_diff +mean
@@ -85,7 +90,7 @@ x_axis=np.array(x_axis)
 y_axis=np.array(y_axis)
 
 
-#plotting
+# plotting correlation plots, Bland-Altman and histogram
 bin_width=1
 data_range = np.max(y_axis) - np.min(y_axis)
 num_bins = int(data_range / bin_width)
@@ -115,10 +120,7 @@ fig.suptitle('Data Analysis LQ IP data',fontsize=16)
 plt.show()
 
 
-
-
-
-
+# calculate sensitivity, specificity etc.
 
 targets1=np.arange(1,(len(capno_HQ_capno)+1))
 
@@ -150,7 +152,7 @@ for index,value in enumerate(capno_HQ_matching):
     RR_freq_capno_matching=60/capno_HQ_matching[index]
     RR_freq_IP_matching=60/IP_HQ_matching[index]
     difference_matching=RR_freq_capno_matching-RR_freq_IP_matching
-    if abs(difference_matching)<=0.5:
+    if abs(difference_matching)<=1: # agreement threshold
         TP=TP+1
     else:
         FP=FP+1
@@ -159,7 +161,7 @@ for index,value in enumerate(capno_HQ_capno):
     RR_freq_capno_capno=60/capno_HQ_capno[index]
     RR_freq_IP_capno=60/IP_HQ_capno[index]
     difference_capno=RR_freq_capno_capno-RR_freq_IP_capno
-    if abs(difference_capno)<=0.5:
+    if abs(difference_capno)<=1: #agreement threshold
         FN=FN+1
     else:
         TN=TN+1
@@ -177,4 +179,3 @@ accuracy=(TP+TN)/(TN+TP+FP+FN)
 Matched_perc=(len(capno_HQ_matching*2))/(all_IP+all_capno)
 HQ_perc_capno=(len(capno_HQ_matching)+len(capno_HQ_capno))/(all_capno)
                                                          
-x=1

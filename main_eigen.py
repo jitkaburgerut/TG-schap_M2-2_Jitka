@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
 import numpy as np
-from functions import windowing_individual_breaths, read_csv_files, BlandAltman
+from functions import windowing_individual_breaths, read_csv_files
 import os
 
 # fill in patient number (for saving csv filtes)
@@ -411,86 +411,7 @@ print('Percentage bad breaths', perc_bad_breaths)
 print('Standard deviations RR-intervals', std_window)
 print('Mean correlation coefficient',mean_corr_coeff )
 
-
-# # Plotting bland-altmann without SQI
-
-# [x_axis, y_axis, limit_of_agreement_min,limit_of_agreement_plus]=BlandAltman(mean_RR_per_window_capno,mean_RR_per_window_IP)
-
-# linemin=np.ones(len(y_axis))*limit_of_agreement_min
-# lineplus=np.ones(len(y_axis))*limit_of_agreement_plus
-# meanline=np.ones(len(y_axis))*np.mean(y_axis)
-
-# x_axis=np.array(x_axis)
-# y_axis=np.array(y_axis)
-
-# fig, (ax1, ax2) = plt.subplots(1, 2)
-
-# ax1.scatter(x_axis, y_axis)
-# ax1.plot(x_axis,linemin, 'red', label='2 SD')
-# ax1.plot(x_axis,lineplus,'red')
-# ax1.plot(x_axis,meanline    ,'black', label='Bias')
-# ax1.set_title('Bland-Altman plot of agreement  between capnography and IP')
-# ax1.set_xlabel('Difference [seconds]')
-# ax1.set_ylabel('Mean [seconds]')
-# ax1.legend()
-
-# ax2.hist((y_axis))
-
-# plt.show()
-
-#plotting bland-altman only for high quality 
-# matching_high_quality_starts_diff=matching_high_quality_starts/32
-# matching_high_quality_starts_diff = matching_high_quality_starts_diff.astype(int)
-
-# [x_axis, y_axis, limit_of_agreement_min,limit_of_agreement_plus]=BlandAltman(mean_RR_per_window_capno[matching_high_quality_starts_diff],mean_RR_per_window_IP[matching_high_quality_starts_diff])
-
-# linemin=np.ones(len(y_axis))*limit_of_agreement_min
-# lineplus=np.ones(len(y_axis))*limit_of_agreement_plus
-# meanline=np.ones(len(y_axis))*np.mean(y_axis)
-
-# x_axis=np.array(x_axis)
-# y_axis=np.array(y_axis)
-
-# plt.figure()
-# plt.scatter(x_axis, y_axis)
-# plt.plot(x_axis,linemin, 'red', label='2 SD')
-# plt.plot(x_axis,lineplus,'red')
-# plt.plot(x_axis,meanline    ,'black', label='Bias')
-# plt.title('Bland-Altman plot of agreement  between capnography and IP for high quality data')
-# plt.ylabel('Difference [seconds]')
-# plt.xlabel('Mean [seconds]')
-# plt.legend()
-
-# plt.show()
-
-
-
-# # potting signals both high quality
-
-# matching_high_quality=[]
-
-# for value in high_quality_starts_capno:
-#     if value in high_quality_starts_IP:
-#         matching_high_quality.append(value)
-
-# matching_high_quality=np.array(matching_high_quality)
-
-# plt.figure()
-
-# plt.plot(normalized_time_capno,normalized_capno, 'b')
-# plt.plot(normalized_time_IP,normalized_IP, 'b')
-
-# # for index,value in enumerate(matching_high_quality):
-# #     high_quality_capno_indices=np.argwhere((normalized_time_capno>matching_high_quality[index]) & (normalized_time_capno<=matching_high_quality[index]+32))
-# #     high_quality_IP_indices=np.argwhere((normalized_time_IP>matching_high_quality[index]) & (normalized_time_IP<=matching_high_quality[index]+32))
-# #     plt.plot(normalized_time_capno[high_quality_capno_indices],normalized_capno[high_quality_capno_indices], 'g')
-# #     plt.plot(normalized_time_IP[high_qualityp_IP_indices],normalized_IP[high_qualityp_IP_indices],'g')
-
-# plt.xlabel('Time [seconds]')
-# plt.show()
-
-
-# # next step is om histogrammen te plotten
+# extract starting points 
 high_quality_starts_capno_diff=high_quality_starts_capno/32
 high_quality_starts_capno_diff = high_quality_starts_capno_diff.astype(int)
 
@@ -529,30 +450,30 @@ capnography=pd.DataFrame({'RR interval':mean_RR_per_window_capno,'Quality':quali
 IP=pd.DataFrame({'RR interval':mean_RR_per_window_IP,'Quality':qualitycolumn })
 
 # save the dataframes containing RR intervals in csv 
-# directory_path='C:/Users/Jitka/OneDrive/Documenten/Technische Geneeskunde Master/Stages/Stage 2  - SEH UMCG/Scripts/'
-# folder_name=str(std_threshold)
-# folder_path_first = os.path.join(directory_path, folder_name)
+directory_path='C:/Users/Jitka/OneDrive/Documenten/Technische Geneeskunde Master/Stages/Stage 2  - SEH UMCG/Scripts/'
+folder_name=str(std_threshold)
+folder_path_first = os.path.join(directory_path, folder_name)
 
-# if not os.path.exists(folder_path_first):
-#     os.makedirs(folder_path_first)
+if not os.path.exists(folder_path_first):
+    os.makedirs(folder_path_first)
 
-# folder_path = os.path.join(folder_path_first, 'capnography')
+folder_path = os.path.join(folder_path_first, 'capnography')
 
-# if not os.path.exists(folder_path):
-#     os.makedirs(folder_path)
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
 
-# filename = "RR_intervals_capno_" + patient + ".csv"
-# full_path = os.path.join(folder_path, filename)
-# capnography.to_csv(full_path)
+filename = "RR_intervals_capno_" + patient + ".csv"
+full_path = os.path.join(folder_path, filename)
+capnography.to_csv(full_path)
 
 
-# folder_path = os.path.join(folder_path_first, 'IP')
+folder_path = os.path.join(folder_path_first, 'IP')
 
-# if not os.path.exists(folder_path):
-#     os.makedirs(folder_path)
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
 
-# filename = "RR_intervals_IP_" + patient + ".csv"
-# full_path = os.path.join(folder_path, filename)
+filename = "RR_intervals_IP_" + patient + ".csv"
+full_path = os.path.join(folder_path, filename)
 # IP.to_csv(full_path)
 
 
