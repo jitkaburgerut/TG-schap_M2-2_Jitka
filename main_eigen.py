@@ -6,14 +6,15 @@ import numpy as np
 from functions import windowing_individual_breaths, read_csv_files, BlandAltman
 import os
 
+# fill in patient number (for saving csv filtes)
 patient='8_224'
 
 # Loading data 
-#folder_path='C:/Users/Jitka/OneDrive - UMCG/Documenten/Stage SEH/Data/17_123'
+folder_path='C:/Users/Jitka/OneDrive - UMCG/Documenten/Stage SEH/Data/17_123'
 #folder_path='C:/Users/Jitka/OneDrive - UMCG/Documenten/Stage SEH/Data/22_133'
 #folder_path='C:/Users/Jitka/OneDrive - UMCG/Documenten/Stage SEH/Data/13_143'
 #folder_path='C:/Users/Jitka/OneDrive - UMCG/Documenten/Stage SEH/Data/5_143'
-folder_path='C:/Users/Jitka/OneDrive - UMCG/Documenten/Stage SEH/Data/18_183'
+#folder_path='C:/Users/Jitka/OneDrive - UMCG/Documenten/Stage SEH/Data/18_183'
 #folder_path='C:/Users/Jitka/OneDrive - UMCG/Documenten/Stage SEH/Data/19_213'
 #folder_path='C:/Users/Jitka/OneDrive - UMCG/Documenten/Stage SEH/Data/8_253'
 #folder_path='C:/Users/Jitka/OneDrive - UMCG/Documenten/Stage SEH/Data/2_283'
@@ -24,25 +25,19 @@ folder_path='C:/Users/Jitka/OneDrive - UMCG/Documenten/Stage SEH/Data/18_183'
 #folder_path='C:/Users/Jitka/OneDrive - UMCG/Documenten/Stage SEH/Data/8_224'
 
 
-
-
-
 # read all CSV files in the folder in a list of dataframes 
 DF_list=read_csv_files(folder_path)
 
+# extract all capnography and IP data
 merged_DF_capno=DF_list[0][(DF_list[0]['Variable']=='Airway CO2 Level Waveform')]
 merged_DF_IP=DF_list[0][(DF_list[0]['Variable']=='Impedance Respiration Wave')]
 
-
 for DF in DF_list:
-    # selecting only IP and capnography data
     DF_capno=DF[(DF['Variable']=='Airway CO2 Level Waveform')]
     DF_IP=DF[(DF['Variable']=='Impedance Respiration Wave')]
 
     merged_DF_capno=merged_DF_capno.merge(DF_capno, how='outer')
     merged_DF_IP=merged_DF_IP.merge(DF_IP,how='outer')
-
-
 
 DF_capno=merged_DF_capno
 DF_IP=merged_DF_IP
@@ -51,38 +46,23 @@ DF_IP=merged_DF_IP
 # converting to datetime
 DF_capno['Timestamp'] = pd.to_datetime(DF_capno['Timestamp'])
 DF_IP['Timestamp'] = pd.to_datetime(DF_IP['Timestamp'])
- 
-
-#to numeric
-#DF_capno['Value'] = pd.to_numeric(DF_capno['Value'], errors='coerce')
-#DF_IP['Value'] = pd.to_numeric(DF_IP['Value'], errors='coerce')
 
 #ensuring data is in chronological order
 DF_capno = DF_capno.sort_values(by='Timestamp')
 DF_IP = DF_IP.sort_values(by='Timestamp')
 
-
 #merge dataframes again to match on time 
 merged_for_time=pd.merge_asof(DF_capno,DF_IP,on='Timestamp',by=['Devicetype'],tolerance=pd.Timedelta(seconds=0.16),direction='nearest')
 
+# only keep time instances where capnography and IP data is available
 nan_count_df = merged_for_time.isna().sum().sum()
 merged_for_time = merged_for_time.dropna()
 
 DF_capno=merged_for_time['Value_x']
 DF_IP=merged_for_time['Value_y']
 
-
 DF_capno=np.array(DF_capno)
 DF_IP=np.array(DF_IP)
-
-
-
-# # Delete all IP data for timestamps that dont contain capno data 
-# first_timestamp_capno = DF_capno['Timestamp'].min()
-# last_timestamp_capno = DF_capno['Timestamp'].max()
-
-# DF_IP = DF_IP[(DF_IP['Timestamp'] >= first_timestamp_capno ) & (DF_IP['Timestamp'] <= last_timestamp_capno)]
-
 
 
 # creating time axis 
@@ -103,30 +83,17 @@ DF_capno=np.char.replace(DF_capno[:].astype(str), ',', '.').astype(float)
 DF_IP=np.char.replace(DF_IP[:].astype(str), ',', '.').astype(float)
 
 
-
-# # creating time axis for IP signal
-
-# difftime_IP=DF_IP['Timestamp'].diff().dt.total_seconds()
-# difftime_IP=difftime_IP.to_numpy()
-
-# time_axis_IP=np.linspace(0,(len(difftime_IP)-1)*difftime_IP[1],num=(len(difftime_IP)))
-# time_axis_IP=np.array(time_axis_IP)
-
-# DF_IP=DF_IP.to_numpy()
-# DF_IP=np.char.replace(DF_IP[:,5].astype(str), ',', '.').astype(float)
-
-
 #plot unfiltered signals
-# range_tb_displayed=np.arange(int(270/difftime_IP[1]),int(330/difftime_IP[1]))
+range_tb_displayed=np.arange(int(270/difftime_IP[1]),int(330/difftime_IP[1]))
 
-# fig, (ax1, ax2) = plt.subplots(2, 1)
-# ax1.plot(time_axis_capno[:], DF_capno[:])
-# ax1.set_title('Unfiltered Capnography signal')
-# ax1.set_xlabel('Time [seconds]')
-# ax2.plot(time_axis_IP[:], DF_IP[:])
-# ax2.set_title('Unfiltered Impedance Pneumography signal')
-# ax2.set_xlabel('Time [seconds]')
-# plt.show()
+fig, (ax1, ax2) = plt.subplots(2, 1)
+ax1.plot(time_axis_capno[:], DF_capno[:])
+ax1.set_title('Unfiltered Capnography signal')
+ax1.set_xlabel('Time [seconds]')
+ax2.plot(time_axis_IP[:], DF_IP[:])
+ax2.set_title('Unfiltered Impedance Pneumography signal')
+ax2.set_xlabel('Time [seconds]')
+plt.show()
 
 
 ## pre processing + count-orig capno
@@ -160,7 +127,7 @@ time_axis_RR_per_window_capno=np.arange(0,normalized_time_capno[-1],32)
 
 
 ## pre processing + count-orig IP
-std_threshold=0.35
+std_threshold=0.25
 [normalized_IP, normalized_time_IP, peak_values_normalized_IP, peak_timevalues_normalized_IP, troughs_values_normalized_IP, troughs_timevalues_normalized_IP, validpeak_values_IP, validpeak_timevalues_IP, mean_RR_per_window_IP,percentage_high_quality_IP,high_quality_starts_IP,low_quality_starts_IP]=windowing_individual_breaths(DF_IP[:], difftime_IP[1],time_axis_IP,std_threshold)
     
 
@@ -189,7 +156,7 @@ time_axis_RR_per_window_IP=np.arange(0,normalized_time_IP[-1],32)
 # ax2.set_ylabel('Time [seconds]')
 # plt.show()
 
-# # RR plotting RR intervals per window for IP and capno
+# # plotting RR intervals per window for IP and capno
 
 # #difference_mean_RR=abs(mean_RR_per_window_capno-mean_RR_per_window_IP)
 
@@ -243,18 +210,15 @@ matching_high_quality_starts=np.array(matching_high_quality_starts)
 matching_HQ=((len(matching_high_quality_starts)*2)/(len(high_quality_starts_capno)+len(low_quality_starts_capno)+len(high_quality_starts_IP)+len(low_quality_starts_IP)))*100
 matching_HQ=round(matching_HQ)
 
-#ax2.text(1000,np.max(normalized_IP)-1,'matching_HQ:'+str(matching_HQ) + '%',weight='bold')
-
 print('HQ capno',percentage_high_quality_capno)
 print('HQ IP',percentage_high_quality_IP)
 print('HQ matched',matching_HQ)
 
 plt.show()
 
-#plotting template/ individual breath cycles + parameter values for a certain segment cpno
+#plotting template/ individual breath cycles + parameter values for a certain segment capno
 lower_bound=576      
 upperbound=640
-
 
 
 range_to_get_specifications=np.argwhere((normalized_time_capno>=lower_bound) & (normalized_time_capno<=upperbound))
@@ -363,8 +327,6 @@ valid_peaks_in_range=validpeak_values_IP[specific_valid_peaks_indices]
 valid_time_peaks_in_range=validpeak_timevalues_IP[specific_valid_peaks_indices]
 normalized_time_IP_range=normalized_time_IP[range_to_get_specifications]
 normalized_IP_range=normalized_IP[range_to_get_specifications]
-
-
 
 
 indices_valid_peaks_in_range=np.where(np.isin(normalized_time_IP_range, valid_time_peaks_in_range))[0]
